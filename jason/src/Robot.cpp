@@ -24,21 +24,27 @@
  * instead if you're new.
  */
 class Robot: public frc::SampleRobot {
-	frc::RobotDrive driveMotors { 0, 1 , 2 , 3} ;// robot drive system
+	//frc::RobotDrive driveMotors { 0, 1 , 2 , 3} ;// robot drive system
 	frc::Joystick stick { 0 }; // only joystick
 	frc::SendableChooser<std::string> chooser;
+	frc::Spark* leftIntakeMotor = new frc::Spark(2);
+	frc::Spark* rightIntakeMotor = new frc::Spark(3);
+	frc::Spark* leftIntakeLiftMotor = new frc::Spark(0);
+	frc::Spark* rightIntakeLiftMotor = new frc::Spark(1);
     frc::Spark* fourthMotor = new frc::Spark(4);
     frc::Spark* fifthMotor = new frc::Spark(5);
     frc::Encoder* armEncoder = new frc::Encoder( 0 , 1 , true );
+    frc::Encoder* intakeEncoder = new frc::Encoder( 2, 3, true);
     frc::ADXRS450_Gyro* gyro = new frc::ADXRS450_Gyro();
-    int armValue;
+    int armValue = 0;
 	const std::string autoNameDefault = "Default";
 	const std::string autoNameCustom = "My Auto";
+	int intakeSpeed = 0;
 
 public:
 	Robot() {
-	//Note SmartDashboard is not initialized here, wait until RobotInit to make SmartDashboard calls
-		driveMotors.SetExpiration(0.1);
+		//	Note SmartDashboard is not initialized here, wait until RobotInit to make SmartDashboard calls;//
+		//driveMotors.SetExpiration(0.1);
 	}
 
 	void RobotInit() {
@@ -48,6 +54,7 @@ public:
 		CameraServer::GetInstance()->StartAutomaticCapture();
 		armEncoder->Reset();
 		gyro->Reset();
+		intakeEncoder->Reset();
 	}
 
 	/*
@@ -57,29 +64,32 @@ public:
 	 * LabVIEW Dashboard, remove all of the chooser code and uncomment the
 	 * GetString line to get the auto name from the text box below the Gyro.
 	 *
-	 * You can add additional auto modes by adding additional comparisons to the
+	 * You can add additional auto modes by adding add		Wait(3);
+		while(true){
+			armValue = armEncoder->GetRaw()itional comparisons to the
 	 * if-else structure below with additional strings. If using the
 	 * SendableChooser make sure to add them to the chooser code above as well.
 	 */
 	void Autonomous() {
 		auto autoSelected = chooser.GetSelected();
-		// std::string autoSelected = frc::SmartDashboard::GetString("Auto Selector", autoNameDefault);
+	//	std::string autoSelected = frc::SmartDashboard::GetString("Auto Selector", autoNameDefault);
 		std::cout << "Auto selected: " << autoSelected << std::endl;
 
 		if (autoSelected == autoNameCustom) {
 			// Custom Auto goes here
 			std::cout << "Running custom Autonomous" << std::endl;
-			driveMotors.SetSafetyEnabled(false);
-			driveMotors.Drive(-0.5, 1.0 ); // spin at half speed
+		//	driveMotors.SetSafetyEnabled(false);
+		//	driveMotors.Drive(-0.5, 1.0 ); // spin at half speed
 			frc::Wait(2.0);                // for 2 seconds
-			driveMotors.Drive(0.0, 0.0);  // stop robot
+		//	driveMotors.Drive(0.0, 0.0);  // stop robot
 		} else {
 			// Default Auto goes here
 			std::cout << "Running default Autonomous" << std::endl;
-			driveMotors.SetSafetyEnabled(false);
-			driveMotors.Drive(-0.5, 0.0); // drive forwards half speed
-			frc::Wait(2.0);                // for 2 seconds
-			driveMotors.Drive(0.0, 0.0);  // stop robot
+		//	driveMotors.SetSafetyEnabled(false);
+		//	driveMotors.Drive(-0.5, 0.0); // drive forwards half speed
+			frc::Wait(2.0);
+		//	armValue = intakeEncoder->GetRaw();  // for 2 seconds
+		//	driveMotors.Drive(0.0, 0.0);  // stop robot
 		}
 	}
 
@@ -87,30 +97,39 @@ public:
 	 * Runs the motors with arcade steering.
 	 */
 	void OperatorControl() override {
-		driveMotors.SetSafetyEnabled(true);
+		//driveMotors.SetSafetyEnabled(true);
 		while (IsOperatorControl() && IsEnabled()) {
-			// drive with arcade style (use right stick)
-			driveMotors.TankDrive(stick,1,stick,5);
-			fourthMotor->Set(stick.GetRawAxis(2));
-			fifthMotor->Set(stick.GetRawAxis(3));
-			// wait for a motor update time
+		//drive with arcade style (use right stick);
+			//driveMotors.TankDrive( stick, 1, stick, 5);
+			// Wait for a motor update time;
 			frc::Wait(0.005);
 		}
 	}
-
 	/*
 	 * Runs during test mode
 	 */
 	void Test() override {
-		Wait(3);
 		while(true){
-			armValue = armEncoder->GetRaw();
+		armValue = intakeEncoder->GetRaw();
 			frc::SmartDashboard::PutNumber("armEncoder", armValue);
 			frc::SmartDashboard::PutNumber("gyroValue", gyro->GetAngle());
-			if ( armValue < 4000)
-				fifthMotor->Set(0.2);
-			else
-				fifthMotor->Set(0);
+			if (stick.GetRawAxis(2) == 0){
+				intakeSpeed = stick.GetRawAxis(3);
+				rightIntakeMotor->Set(-0.5);
+				leftIntakeMotor->Set(.5);
+			}
+				else if (stick.GetRawAxis(3) == 0 ){
+					intakeSpeed = stick.GetRawAxis(2);
+					rightIntakeMotor->Set(.5);
+					leftIntakeMotor->Set(-0.5);
+			}
+					else  {
+						rightIntakeMotor->Set(0);
+						leftIntakeMotor->Set(0);
+
+
+		}
+
 		}
 	}
 };
